@@ -49,12 +49,17 @@ class DashboardPage extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.book),
               title: const Text('Consultar Catálogo'),
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, AppRoutes.catalogo),
             ),
             ListTile(
               leading: const Icon(Icons.history),
               title: const Text('Meus Empréstimos'),
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, AppRoutes.meusEmprestimos),
+            ),
+            ListTile(
+              leading: const Icon(Icons.message),
+              title: const Text('Minhas Solicitações'),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
             ),
             
             // Ações específicas de Admin/Editor
@@ -65,12 +70,20 @@ class DashboardPage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.add_business),
                 title: const Text('Cadastrar Livro'),
-                onTap: () {},
+                onTap: () => Navigator.of(context).pushNamed(AppRoutes.livroForm),
               ),
               ListTile(
-                leading: const Icon(Icons.people),
-                title: const Text('Gerenciar Usuários'),
-                onTap: () {},
+                leading: const Icon(Icons.person_add),
+                title: const Text('Cadastrar Editor'),
+                onTap: () => Navigator.of(context).pushNamed(
+                  AppRoutes.usuarioForm,
+                  arguments: AppConstants.profileEditor,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.list_alt),
+                title: const Text('Atender Solicitações'),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
               ),
             ],
             
@@ -78,7 +91,7 @@ class DashboardPage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.bar_chart),
                 title: const Text('Relatórios Gerenciais'),
-                onTap: () {},
+                onTap: () => Navigator.pushNamed(context, AppRoutes.relatorios),
               ),
             ],
           ],

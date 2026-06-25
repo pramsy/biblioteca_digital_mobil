@@ -71,12 +71,20 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 24),
             _isLoading
                 ? const CircularProgressIndicator()
-                : Semantics(
-                    label: 'Botão de entrar',
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('ENTRAR'),
-                    ),
+                : Column(
+                    children: [
+                      Semantics(
+                        label: 'Botão de entrar',
+                        child: ElevatedButton(
+                          onPressed: _login,
+                          child: const Text('ENTRAR'),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pushNamed(AppRoutes.usuarioForm),
+                        child: const Text('Não tem conta? Cadastre-se como Leitor'),
+                      ),
+                    ],
                   ),
           ],
         ),
