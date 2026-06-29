@@ -12,10 +12,9 @@ class InativarLivroUseCase {
   Future<void> execute(int id) async {
     final usuarioLogado = _authService.usuarioLogado;
 
-    // T-UNIT-BOK-004
     if (usuarioLogado?.perfil != AppConstants.profileAdmin &&
         usuarioLogado?.perfil != AppConstants.profileAdminInicial &&
-        usuarioLogado?.perfil != AppConstants.profileEditor) {
+        usuarioLogado?.perfil != AppConstants.profileBibliotecario) {
       throw UnauthorizedException('Sem permissão para inativar livros.');
     }
 
@@ -24,7 +23,6 @@ class InativarLivroUseCase {
       throw ValidationException('Livro não encontrado.');
     }
 
-    // T-UNIT-BOK-005: Impedir se emprestado
     if (livro.status == AppConstants.bookStatusEmprestado) {
       throw BookLockedException('Não é possível inativar um livro emprestado.');
     }

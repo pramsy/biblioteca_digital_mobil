@@ -3,8 +3,11 @@ import '../../app/config/injection.dart';
 import '../../domain/entities/livro.dart';
 import '../../domain/repositories/livro_repository.dart';
 import '../../domain/usecases/RegistrarEmprestimoUseCase.dart';
+import '../../domain/usecases/InativarLivroUseCase.dart';
 import '../../core/services/AuthService.dart';
+import '../../core/constants/app_constants.dart';
 import '../../app/routes/app_routes.dart';
+import 'livro_form_page.dart';
 
 class CatalogoPage extends StatefulWidget {
   const CatalogoPage({super.key});
@@ -25,14 +28,33 @@ class _CatalogoPageState extends State<CatalogoPage> {
   }
 
   Future<void> _carregarLivros([String query = '']) async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    final repository = getIt<LivroRepository>();
-    if (query.isEmpty) {
-      _livros = await repository.getAllLivros();
-    } else {
-      _livros = await repository.buscarLivros(query);
+    try {
+      final repository = getIt<LivroRepository>();
+      List<Livro> resultado;
+      if (query.isEmpty) {
+        resultado = await repository.getAllLivros();
+      } else {
+        resultado = await repository.buscarLivros(query);
+      }
+      
+      if (mounted) {
+        setState(() {
+          _livros = resultado;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar livros: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _solicitarEmprestimo(Livro livro) async {
@@ -56,10 +78,52 @@ class _CatalogoPageState extends State<CatalogoPage> {
     }
   }
 
+  Future<void> _deletarLivro(Livro livro) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir Livro'),
+        content: Text('Deseja realmente excluir "${livro.titulo}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('EXCLUIR', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await getIt<InativarLivroUseCase>().execute(livro.id!);
+        _carregarLivros(_searchController.text);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final usuario = getIt<AuthService>().usuarioLogado;
+    final isAdmin = usuario?.perfil == AppConstants.profileAdmin || 
+                    usuario?.perfil == AppConstants.profileAdminInicial ||
+                    usuario?.perfil == AppConstants.profileBibliotecario;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Catálogo de Livros')),
+      appBar: AppBar(
+        title: const Text('Catálogo de Livros'),
+        actions: [
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                final result = await Navigator.pushNamed(context, AppRoutes.livroForm);
+                if (result == true) _carregarLivros();
+              },
+            )
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -77,28 +141,58 @@ class _CatalogoPageState extends State<CatalogoPage> {
                   },
                 ),
               ),
-              onChanged: _carregarLivros,
+              onChanged: (value) => _carregarLivros(value),
             ),
           ),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    itemCount: _livros.length,
-                    itemBuilder: (context, index) {
-                      final livro = _livros[index];
-                      return ListTile(
-                        title: Text(livro.titulo),
-                        subtitle: Text('${livro.autor} - ${livro.categoria}'),
-                        trailing: ElevatedButton(
-                          onPressed: livro.status == 'DISPONIVEL' 
-                            ? () => _solicitarEmprestimo(livro) 
-                            : null,
-                          child: Text(livro.status == 'DISPONIVEL' ? 'PEGAR' : 'INDISP.'),
-                        ),
-                      );
-                    },
-                  ),
+                : _livros.isEmpty
+                    ? const Center(child: Text('Nenhum livro encontrado.'))
+                    : ListView.builder(
+                        itemCount: _livros.length,
+                        itemBuilder: (context, index) {
+                          final livro = _livros[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: ListTile(
+                              title: Text(livro.titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('${livro.autor} - ${livro.categoria}\nStatus: ${livro.status}'),
+                              isThreeLine: true,
+                              trailing: isAdmin
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Colors.blue),
+                                          onPressed: () async {
+                                            final result = await Navigator.pushNamed(
+                                              context,
+                                              AppRoutes.livroForm,
+                                              arguments: livro,
+                                            );
+                                            if (result == true) _carregarLivros();
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () => _deletarLivro(livro),
+                                        ),
+                                      ],
+                                    )
+                                  : SizedBox(
+                                      width: 100,
+                                      child: ElevatedButton(
+                                        onPressed: livro.status == AppConstants.bookStatusDisponivel
+                                            ? () => _solicitarEmprestimo(livro)
+                                            : null,
+                                        child: Text(livro.status == AppConstants.bookStatusDisponivel ? 'PEGAR' : 'INDISP.'),
+                                      ),
+                                    ),
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),

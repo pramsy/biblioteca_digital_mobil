@@ -72,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
             _isLoading
                 ? const CircularProgressIndicator()
                 : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Semantics(
                         label: 'Botão de entrar',
@@ -80,6 +81,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: const Text('ENTRAR'),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       TextButton(
                         onPressed: () => Navigator.of(context).pushNamed(AppRoutes.usuarioForm),
                         child: const Text('Não tem conta? Cadastre-se como Leitor'),

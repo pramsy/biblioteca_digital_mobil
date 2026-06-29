@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import '../../app/config/injection.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/usecases/CadastrarUsuarioUseCase.dart';
-import '../../domain/usecases/CadastrarEditorUseCase.dart';
 import '../../core/constants/app_constants.dart';
 
 class UsuarioFormPage extends StatefulWidget {
-  final String perfilInicial; // LEITOR ou EDITOR
+  final String perfilInicial;
   const UsuarioFormPage({super.key, this.perfilInicial = AppConstants.profileLeitor});
 
   @override
@@ -22,18 +21,18 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _perfil = widget.perfilInicial;
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is String) {
       _perfil = args;
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _perfil = widget.perfilInicial;
   }
 
   Future<void> _salvar() async {
@@ -48,16 +47,12 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
         perfil: _perfil,
       );
 
-      if (_perfil == AppConstants.profileEditor) {
-        await getIt<CadastrarEditorUseCase>().execute(usuario);
-      } else {
-        await getIt<CadastrarUsuarioUseCase>().execute(usuario);
-      }
+      await getIt<CadastrarUsuarioUseCase>().execute(usuario);
 
       if (mounted) {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuário cadastrado com sucesso!')),
+          SnackBar(content: Text('$_perfil cadastrado com sucesso!')),
         );
       }
     } catch (e) {
@@ -73,9 +68,12 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    String label = _perfil == AppConstants.profileLeitor ? 'Leitor' : 
+                   _perfil == AppConstants.profileBibliotecario ? 'Bibliotecário' : 'Administrador';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cadastrar $_perfil'),
+        title: Text('Cadastrar $label'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -104,14 +102,18 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
                     hintText: 'Mínimo 8 caracteres, letra e número',
                   ),
                   obscureText: true,
-                  validator: (v) => v == null || v.length < 5 ? 'Senha muito curta' : null,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Obrigatório';
+                    if (v.length < 8) return 'Mínimo 8 caracteres';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 _isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _salvar,
-                        child: const Text('CADASTRAR'),
+                        child: Text('CADASTRAR $label'.toUpperCase()),
                       ),
               ],
             ),

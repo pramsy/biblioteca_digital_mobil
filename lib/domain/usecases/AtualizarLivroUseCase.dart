@@ -13,10 +13,9 @@ class AtualizarLivroUseCase {
   Future<void> execute(Livro livro) async {
     final usuarioLogado = _authService.usuarioLogado;
 
-    // T-UNIT-BOK-003
     if (usuarioLogado?.perfil != AppConstants.profileAdmin &&
         usuarioLogado?.perfil != AppConstants.profileAdminInicial &&
-        usuarioLogado?.perfil != AppConstants.profileEditor) {
+        usuarioLogado?.perfil != AppConstants.profileBibliotecario) {
       throw UnauthorizedException('Sem permissão para atualizar livros.');
     }
 

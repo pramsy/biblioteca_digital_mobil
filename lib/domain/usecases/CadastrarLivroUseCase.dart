@@ -13,18 +13,19 @@ class CadastrarLivroUseCase {
   Future<int> execute(Livro livro) async {
     final usuarioLogado = _authService.usuarioLogado;
 
-    // T-UNIT-BOK-001: Editor ou Admin
     if (usuarioLogado?.perfil != AppConstants.profileAdmin &&
         usuarioLogado?.perfil != AppConstants.profileAdminInicial &&
-        usuarioLogado?.perfil != AppConstants.profileEditor) {
+        usuarioLogado?.perfil != AppConstants.profileBibliotecario) {
       throw UnauthorizedException('Sem permissão para cadastrar livros.');
     }
 
-    // T-UNIT-BOK-002: Dados Inválidos
     if (livro.titulo.isEmpty || livro.autor.isEmpty || livro.categoria.isEmpty) {
       throw ValidationException('Título, autor e categoria são obrigatórios.');
     }
 
-    return await _repository.cadastrarLivro(livro);
+    // Garantir status DISPONIVEL ao cadastrar
+    final livroParaSalvar = livro.copyWith(status: AppConstants.bookStatusDisponivel);
+
+    return await _repository.cadastrarLivro(livroParaSalvar);
   }
 }

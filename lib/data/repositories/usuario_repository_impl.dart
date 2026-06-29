@@ -71,7 +71,7 @@ class UsuarioRepositoryImpl implements UsuarioRepository {
   @override
   Future<List<Usuario>> getAllUsuarios() async {
     final db = await _databaseService.database;
-    final maps = await db.query('Usuarios');
+    final maps = await db.query('Usuarios', where: "status != 'INATIVO'");
     return maps.map((e) => UsuarioModel.fromMap(e)).toList();
   }
 
@@ -80,7 +80,7 @@ class UsuarioRepositoryImpl implements UsuarioRepository {
     final db = await _databaseService.database;
     final maps = await db.query(
       'Usuarios',
-      where: "perfil = 'ADMIN' OR perfil = 'ADMIN_INICIAL'",
+      where: "perfil IN ('ADMIN', 'ADMIN_INICIAL') AND status = 'ATIVO'",
     );
     return maps.isNotEmpty;
   }

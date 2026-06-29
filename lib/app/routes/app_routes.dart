@@ -8,6 +8,8 @@ import '../../features/emprestimos/meus_emprestimos_page.dart';
 import '../../features/solicitacoes/solicitacao_form_page.dart';
 import '../../features/solicitacoes/lista_solicitacoes_page.dart';
 import '../../features/relatorios/relatorios_page.dart';
+import '../../features/emprestimos/lista_emprestimos_page.dart';
+import '../../domain/entities/livro.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -16,6 +18,7 @@ class AppRoutes {
   static const String usuarioForm = '/usuario-form';
   static const String catalogo = '/catalogo';
   static const String meusEmprestimos = '/meus-emprestimos';
+  static const String listaEmprestimos = '/lista-emprestimos';
   static const String solicitacaoForm = '/solicitacao-form';
   static const String listaSolicitacoes = '/lista-solicitacoes';
   static const String relatorios = '/relatorios';
@@ -23,10 +26,14 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
         login: (context) => const LoginPage(),
         dashboard: (context) => const DashboardPage(),
-        livroForm: (context) => const LivroFormPage(),
+        livroForm: (context) {
+          final livro = ModalRoute.of(context)?.settings.arguments as Livro?;
+          return LivroFormPage(livro: livro);
+        },
         usuarioForm: (context) => const UsuarioFormPage(),
         catalogo: (context) => const CatalogoPage(),
         meusEmprestimos: (context) => const MeusEmprestimosPage(),
+        listaEmprestimos: (context) => const ListaEmprestimosPage(),
         solicitacaoForm: (context) => const SolicitacaoFormPage(),
         listaSolicitacoes: (context) => const ListaSolicitacoesPage(),
         relatorios: (context) => const RelatoriosPage(),

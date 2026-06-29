@@ -15,7 +15,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(88, 48), // Tamanho mínimo acessível, mas não largura total
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),

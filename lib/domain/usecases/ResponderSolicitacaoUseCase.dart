@@ -12,14 +12,12 @@ class ResponderSolicitacaoUseCase {
   Future<void> execute(int id, String resposta) async {
     final usuarioLogado = _authService.usuarioLogado;
 
-    // T-UNIT-REQ-004: Sem Permissão
     if (usuarioLogado?.perfil != AppConstants.profileAdmin &&
         usuarioLogado?.perfil != AppConstants.profileAdminInicial &&
-        usuarioLogado?.perfil != AppConstants.profileEditor) {
+        usuarioLogado?.perfil != AppConstants.profileBibliotecario) {
       throw UnauthorizedException('Sem permissão para responder solicitações.');
     }
 
-    // T-UNIT-REQ-003: Responder Válida
     final solicitacao = await _repository.getSolicitacaoById(id);
     if (solicitacao == null) {
       throw ValidationException('Solicitação não encontrada.');

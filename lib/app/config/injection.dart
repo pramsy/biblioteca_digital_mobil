@@ -13,7 +13,6 @@ import '../../data/repositories/livro_repository_impl.dart';
 import '../../data/repositories/solicitacao_repository_impl.dart';
 import '../../data/repositories/emprestimo_repository_impl.dart';
 import '../../domain/usecases/CadastrarUsuarioUseCase.dart';
-import '../../domain/usecases/CadastrarEditorUseCase.dart';
 import '../../domain/usecases/AtualizarUsuarioUseCase.dart';
 import '../../domain/usecases/InativarUsuarioUseCase.dart';
 import '../../domain/usecases/CadastrarLivroUseCase.dart';
@@ -45,8 +44,7 @@ Future<void> setupInjection() async {
   getIt.registerLazySingleton(() => SeedService(getIt()));
 
   // Use Cases
-  getIt.registerLazySingleton(() => CadastrarUsuarioUseCase(getIt()));
-  getIt.registerLazySingleton(() => CadastrarEditorUseCase(getIt(), getIt()));
+  getIt.registerLazySingleton(() => CadastrarUsuarioUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => AtualizarUsuarioUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => InativarUsuarioUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => CadastrarLivroUseCase(getIt(), getIt()));

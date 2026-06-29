@@ -12,9 +12,15 @@ class DashboardPage extends StatelessWidget {
     final authService = getIt<AuthService>();
     final usuario = authService.usuarioLogado;
 
-    final isAdmin = usuario?.perfil == AppConstants.profileAdmin || 
-                    usuario?.perfil == AppConstants.profileAdminInicial;
-    final isEditor = usuario?.perfil == AppConstants.profileEditor;
+    final isInitialAdmin = usuario?.perfil == AppConstants.profileAdminInicial;
+    final isAdmin = usuario?.perfil == AppConstants.profileAdmin;
+    final isBibliotecario = usuario?.perfil == AppConstants.profileBibliotecario;
+    final isLeitor = usuario?.perfil == AppConstants.profileLeitor;
+
+    final canManageUsers = isInitialAdmin || isAdmin;
+    final canManageBooks = isInitialAdmin || isAdmin || isBibliotecario;
+    final canSeeReports = isInitialAdmin || isAdmin;
+    final canRespondRequests = isInitialAdmin || isAdmin || isBibliotecario;
 
     return Scaffold(
       appBar: AppBar(
@@ -42,10 +48,8 @@ class DashboardPage extends StatelessWidget {
             Text('Perfil: ${usuario?.perfil ?? ''}'),
             const SizedBox(height: 24),
             
-            const Text('Ações Rápidas', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Ações do Leitor', style: TextStyle(fontWeight: FontWeight.bold)),
             const Divider(),
-            
-            // Ações para todos
             ListTile(
               leading: const Icon(Icons.book),
               title: const Text('Consultar Catálogo'),
@@ -62,32 +66,66 @@ class DashboardPage extends StatelessWidget {
               onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
             ),
             
-            // Ações específicas de Admin/Editor
-            if (isAdmin || isEditor) ...[
+            if (canManageBooks || canManageUsers) ...[
               const SizedBox(height: 16),
               const Text('Administração', style: TextStyle(fontWeight: FontWeight.bold)),
               const Divider(),
-              ListTile(
-                leading: const Icon(Icons.add_business),
-                title: const Text('Cadastrar Livro'),
-                onTap: () => Navigator.of(context).pushNamed(AppRoutes.livroForm),
-              ),
-              ListTile(
-                leading: const Icon(Icons.person_add),
-                title: const Text('Cadastrar Editor'),
-                onTap: () => Navigator.of(context).pushNamed(
-                  AppRoutes.usuarioForm,
-                  arguments: AppConstants.profileEditor,
+              
+              if (canManageBooks)
+                ListTile(
+                  leading: const Icon(Icons.add_business),
+                  title: const Text('Gerenciar Acervo (Livros)'),
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.catalogo),
                 ),
-              ),
+
               ListTile(
-                leading: const Icon(Icons.list_alt),
-                title: const Text('Atender Solicitações'),
-                onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
+                leading: const Icon(Icons.history_edu),
+                title: const Text('Gerenciar Empréstimos'),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.listaEmprestimos),
               ),
+
+              if (canManageUsers) ...[
+                if (isInitialAdmin)
+                  ListTile(
+                    leading: const Icon(Icons.person_add),
+                    title: const Text('Cadastrar Administrador'),
+                    onTap: () => Navigator.of(context).pushNamed(
+                      AppRoutes.usuarioForm,
+                      arguments: AppConstants.profileAdmin,
+                    ),
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.person_add_alt_1),
+                  title: const Text('Cadastrar Bibliotecário'),
+                  onTap: () => Navigator.of(context).pushNamed(
+                    AppRoutes.usuarioForm,
+                    arguments: AppConstants.profileBibliotecario,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.people),
+                  title: const Text('Gerenciar Usuários'),
+                  onTap: () {
+                    // Aqui poderia abrir uma lista de usuários para inativar/editar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Funcionalidade de Listagem de Usuários em desenvolvimento.')),
+                    );
+                  },
+                ),
+              ],
+
+              if (canRespondRequests)
+                ListTile(
+                  leading: const Icon(Icons.list_alt),
+                  title: const Text('Atender Solicitações'),
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
+                ),
             ],
             
-            if (isAdmin) ...[
+            if (canSeeReports) ...[
+              const SizedBox(height: 16),
+              const Text('Relatórios', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.bar_chart),
                 title: const Text('Relatórios Gerenciais'),

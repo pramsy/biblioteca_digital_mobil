@@ -1,9 +1,11 @@
 class AppConstants {
   static const String profileAdmin = 'ADMIN';
-  static const String profileEditor = 'EDITOR';
+  static const String profileBibliotecario = 'BIBLIOTECARIO';
   static const String profileLeitor = 'LEITOR';
   static const String profileAdminInicial = 'ADMIN_INICIAL';
 
+  static const String statusAtivo = 'ATIVO';
+  static const String statusInativo = 'INATIVO';
   static const String statusAberta = 'ABERTA';
   static const String statusRespondida = 'RESPONDIDA';
 

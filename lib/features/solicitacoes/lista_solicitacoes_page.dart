@@ -32,7 +32,7 @@ class _ListaSolicitacoesPageState extends State<ListaSolicitacoesPage> {
 
     if (usuario?.perfil == AppConstants.profileAdmin || 
         usuario?.perfil == AppConstants.profileAdminInicial ||
-        usuario?.perfil == AppConstants.profileEditor) {
+        usuario?.perfil == AppConstants.profileBibliotecario) {
       _solicitacoes = await repository.getAllSolicitacoes();
     } else {
       _solicitacoes = await repository.getSolicitacoesByUsuario(usuario!.id!);
