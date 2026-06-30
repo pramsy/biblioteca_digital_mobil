@@ -1,16 +1,14 @@
 import '../../domain/entities/emprestimo.dart';
 import '../../domain/repositories/emprestimo_repository.dart';
 import '../models/emprestimo_model.dart';
-import '../../core/services/DatabaseService.dart';
+import 'base_repository.dart';
 
-class EmprestimoRepositoryImpl implements EmprestimoRepository {
-  final DatabaseService _databaseService;
-
-  EmprestimoRepositoryImpl(this._databaseService);
+class EmprestimoRepositoryImpl extends BaseRepository implements EmprestimoRepository {
+  EmprestimoRepositoryImpl(super.databaseService);
 
   @override
   Future<int> registrarEmprestimo(Emprestimo emprestimo) async {
-    final db = await _databaseService.database;
+    final client = await db;
     final model = EmprestimoModel(
       usuarioId: emprestimo.usuarioId,
       livroId: emprestimo.livroId,
@@ -18,7 +16,7 @@ class EmprestimoRepositoryImpl implements EmprestimoRepository {
       dataPrevisaoDevolucao: emprestimo.dataPrevisaoDevolucao,
     );
     
-    return await db.transaction((txn) async {
+    return await client.transaction((txn) async {
       final id = await txn.insert('Emprestimos', model.toMap());
       await txn.update(
         'Livros',
@@ -32,11 +30,11 @@ class EmprestimoRepositoryImpl implements EmprestimoRepository {
 
   @override
   Future<void> registrarDevolucao(int id, DateTime dataDevolucao) async {
-    final db = await _databaseService.database;
+    final client = await db;
     final emprestimo = await getEmprestimoById(id);
     if (emprestimo == null) return;
 
-    await db.transaction((txn) async {
+    await client.transaction((txn) async {
       await txn.update(
         'Emprestimos',
         {
@@ -57,33 +55,29 @@ class EmprestimoRepositoryImpl implements EmprestimoRepository {
 
   @override
   Future<void> renovarEmprestimo(int id, DateTime novaDataPrevisao) async {
-    final db = await _databaseService.database;
-    await db.update(
+    await update(
       'Emprestimos',
       {'dataPrevisaoDevolucao': novaDataPrevisao.toIso8601String()},
-      where: 'id = ?',
-      whereArgs: [id],
+      'id = ?',
+      [id],
     );
   }
 
   @override
   Future<List<Emprestimo>> getEmprestimosByUsuario(int usuarioId) async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Emprestimos', where: 'usuarioId = ?', whereArgs: [usuarioId]);
+    final maps = await query('Emprestimos', where: 'usuarioId = ?', whereArgs: [usuarioId]);
     return maps.map((e) => EmprestimoModel.fromMap(e)).toList();
   }
 
   @override
   Future<List<Emprestimo>> getAllEmprestimos() async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Emprestimos');
+    final maps = await query('Emprestimos');
     return maps.map((e) => EmprestimoModel.fromMap(e)).toList();
   }
 
   @override
   Future<Emprestimo?> getEmprestimoById(int id) async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Emprestimos', where: 'id = ?', whereArgs: [id]);
+    final maps = await query('Emprestimos', where: 'id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) {
       return EmprestimoModel.fromMap(maps.first);
     }
@@ -92,9 +86,8 @@ class EmprestimoRepositoryImpl implements EmprestimoRepository {
 
   @override
   Future<List<Map<String, dynamic>>> getRelatorioDados(DateTime inicio, DateTime fim) async {
-    final db = await _databaseService.database;
-    // Simplified report query
-    return await db.rawQuery('''
+    final client = await db;
+    return await client.rawQuery('''
       SELECT COUNT(*) as totalEmprestimos
       FROM Emprestimos
       WHERE dataEmprestimo BETWEEN ? AND ?

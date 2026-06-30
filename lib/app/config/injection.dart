@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import '../../core/services/CacheService.dart';
+import '../../core/services/JobQueueService.dart';
 import '../../core/services/DatabaseService.dart';
 import '../../core/services/AuthService.dart';
 import '../../core/services/SeedService.dart';
@@ -32,15 +34,17 @@ Future<void> setupInjection() async {
   getIt.registerLazySingleton(() => DatabaseService());
   getIt.registerLazySingleton(() => NavigationService());
   getIt.registerLazySingleton(() => AccessibilityService());
+  getIt.registerLazySingleton(() => CacheService());
+  getIt.registerLazySingleton(() => JobQueueService());
 
   // Repositories
   getIt.registerLazySingleton<UsuarioRepository>(() => UsuarioRepositoryImpl(getIt()));
-  getIt.registerLazySingleton<LivroRepository>(() => LivroRepositoryImpl(getIt()));
+  getIt.registerLazySingleton<LivroRepository>(() => LivroRepositoryImpl(getIt(), getIt()));
   getIt.registerLazySingleton<SolicitacaoRepository>(() => SolicitacaoRepositoryImpl(getIt()));
   getIt.registerLazySingleton<EmprestimoRepository>(() => EmprestimoRepositoryImpl(getIt()));
 
   // Auth & Seed
-  getIt.registerLazySingleton(() => AuthService(getIt()));
+  getIt.registerLazySingleton(() => AuthService(getIt(), getIt()));
   getIt.registerLazySingleton(() => SeedService(getIt()));
 
   // Use Cases
@@ -51,7 +55,7 @@ Future<void> setupInjection() async {
   getIt.registerLazySingleton(() => AtualizarLivroUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => InativarLivroUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => EnviarSolicitacaoUseCase(getIt(), getIt()));
-  getIt.registerLazySingleton(() => ResponderSolicitacaoUseCase(getIt(), getIt()));
+  getIt.registerLazySingleton(() => ResponderSolicitacaoUseCase(getIt(), getIt(), getIt()));
   getIt.registerLazySingleton(() => RegistrarEmprestimoUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => RegistrarDevolucaoUseCase(getIt()));
   getIt.registerLazySingleton(() => RenovarEmprestimoUseCase(getIt()));

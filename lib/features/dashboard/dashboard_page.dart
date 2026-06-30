@@ -15,7 +15,6 @@ class DashboardPage extends StatelessWidget {
     final isInitialAdmin = usuario?.perfil == AppConstants.profileAdminInicial;
     final isAdmin = usuario?.perfil == AppConstants.profileAdmin;
     final isBibliotecario = usuario?.perfil == AppConstants.profileBibliotecario;
-    final isLeitor = usuario?.perfil == AppConstants.profileLeitor;
 
     final canManageUsers = isInitialAdmin || isAdmin;
     final canManageBooks = isInitialAdmin || isAdmin || isBibliotecario;

@@ -3,6 +3,7 @@ import '../../app/config/injection.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/usecases/CadastrarUsuarioUseCase.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/validator_helper.dart';
 
 class UsuarioFormPage extends StatefulWidget {
   final String perfilInicial;
@@ -41,8 +42,8 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
     setState(() => _isLoading = true);
     try {
       final usuario = Usuario(
-        nome: _nomeController.text,
-        email: _emailController.text,
+        nome: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
         senha: _senhaController.text,
         perfil: _perfil,
       );
@@ -52,13 +53,27 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
       if (mounted) {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$_perfil cadastrado com sucesso!')),
+          SnackBar(
+            content: Text('Sucesso: $_perfil cadastrado corretamente.'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
+        String msg = e.toString().replaceAll('Exception: ', '');
+        if (msg.contains('E-mail já cadastrado')) {
+          msg = 'Conflito: E-mail em uso. Intervenção: Use outro e-mail ou recupere sua senha.';
+        } else if (msg.contains('senha deve ter no mínimo')) {
+          msg = 'Segurança fraca. Intervenção: Use pelo menos 8 caracteres com letras e números.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text('Ação necessária: $msg'),
+            backgroundColor: Colors.red[700],
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -81,39 +96,50 @@ class _UsuarioFormPageState extends State<UsuarioFormPage> {
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Text(
+                  'Preencha as informações abaixo para criar a conta.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _nomeController,
-                  decoration: const InputDecoration(labelText: 'Nome Completo'),
-                  validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Nome Completo',
+                    hintText: 'Ex: João Silva',
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: ValidatorHelper.validarNome,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'E-mail'),
+                  decoration: const InputDecoration(
+                    labelText: 'E-mail',
+                    hintText: 'exemplo@biblioteca.com',
+                    prefixIcon: Icon(Icons.email),
+                  ),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                  validator: ValidatorHelper.validarEmail,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _senhaController,
                   decoration: const InputDecoration(
                     labelText: 'Senha',
-                    hintText: 'Mínimo 8 caracteres, letra e número',
+                    hintText: 'Mínimo 8 caracteres (letras e números)',
+                    prefixIcon: Icon(Icons.lock),
                   ),
                   obscureText: true,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Obrigatório';
-                    if (v.length < 8) return 'Mínimo 8 caracteres';
-                    return null;
-                  },
+                  validator: ValidatorHelper.validarSenha,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
                         onPressed: _salvar,
-                        child: Text('CADASTRAR $label'.toUpperCase()),
+                        child: Text('FINALIZAR CADASTRO DE $label'.toUpperCase()),
                       ),
               ],
             ),

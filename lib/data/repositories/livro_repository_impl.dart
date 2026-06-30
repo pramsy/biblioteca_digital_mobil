@@ -1,24 +1,31 @@
 import '../../domain/entities/livro.dart';
 import '../../domain/repositories/livro_repository.dart';
 import '../models/livro_model.dart';
-import '../../core/services/DatabaseService.dart';
+import '../../core/services/CacheService.dart';
+import 'base_repository.dart';
 
-class LivroRepositoryImpl implements LivroRepository {
-  final DatabaseService _databaseService;
+class LivroRepositoryImpl extends BaseRepository implements LivroRepository {
+  final CacheService _cacheService;
+  static const String _cacheKey = 'catalogo_livros';
 
-  LivroRepositoryImpl(this._databaseService);
+  LivroRepositoryImpl(super.databaseService, this._cacheService);
 
   @override
   Future<List<Livro>> getAllLivros() async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Livros', where: "status != 'INATIVO'");
-    return maps.map((e) => LivroModel.fromMap(e)).toList();
+    if (_cacheService.contains(_cacheKey)) {
+      return _cacheService.get<List<Livro>>(_cacheKey)!;
+    }
+
+    final maps = await query('Livros', where: "status != 'INATIVO'");
+    final result = maps.map((e) => LivroModel.fromMap(e)).toList();
+    
+    _cacheService.save(_cacheKey, result);
+    return result;
   }
 
   @override
   Future<Livro?> getLivroById(int id) async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Livros', where: 'id = ?', whereArgs: [id]);
+    final maps = await query('Livros', where: 'id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) {
       return LivroModel.fromMap(maps.first);
     }
@@ -27,31 +34,31 @@ class LivroRepositoryImpl implements LivroRepository {
 
   @override
   Future<int> cadastrarLivro(Livro livro) async {
-    final db = await _databaseService.database;
     final model = LivroModel.fromEntity(livro);
-    return await db.insert('Livros', model.toMap());
+    final id = await insert('Livros', model.toMap());
+    _cacheService.remove(_cacheKey); // Invalida cache
+    return id;
   }
 
   @override
   Future<void> atualizarLivro(Livro livro) async {
-    final db = await _databaseService.database;
     final model = LivroModel.fromEntity(livro);
-    await db.update('Livros', model.toMap(), where: 'id = ?', whereArgs: [livro.id]);
+    await update('Livros', model.toMap(), 'id = ?', [livro.id]);
+    _cacheService.remove(_cacheKey);
   }
 
   @override
   Future<void> inativarLivro(int id) async {
-    final db = await _databaseService.database;
-    await db.update('Livros', {'status': 'INATIVO'}, where: 'id = ?', whereArgs: [id]);
+    await update('Livros', {'status': 'INATIVO'}, 'id = ?', [id]);
+    _cacheService.remove(_cacheKey);
   }
 
   @override
-  Future<List<Livro>> buscarLivros(String query) async {
-    final db = await _databaseService.database;
-    final maps = await db.query(
+  Future<List<Livro>> buscarLivros(String queryStr) async {
+    final maps = await query(
       'Livros',
       where: "(titulo LIKE ? OR autor LIKE ? OR categoria LIKE ?) AND status != 'INATIVO'",
-      whereArgs: ['%$query%', '%$query%', '%$query%'],
+      whereArgs: ['%$queryStr%', '%$queryStr%', '%$queryStr%'],
     );
     return maps.map((e) => LivroModel.fromMap(e)).toList();
   }

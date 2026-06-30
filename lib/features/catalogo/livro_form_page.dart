@@ -3,6 +3,7 @@ import '../../app/config/injection.dart';
 import '../../domain/entities/livro.dart';
 import '../../domain/usecases/CadastrarLivroUseCase.dart';
 import '../../domain/usecases/AtualizarLivroUseCase.dart';
+import '../../core/utils/validator_helper.dart';
 
 class LivroFormPage extends StatefulWidget {
   final Livro? livro;
@@ -34,29 +35,35 @@ class _LivroFormPageState extends State<LivroFormPage> {
     try {
       if (widget.livro == null) {
         final novoLivro = Livro(
-          titulo: _tituloController.text,
-          autor: _autorController.text,
-          categoria: _categoriaController.text,
+          titulo: _tituloController.text.trim(),
+          autor: _autorController.text.trim(),
+          categoria: _categoriaController.text.trim(),
         );
         await getIt<CadastrarLivroUseCase>().execute(novoLivro);
       } else {
         final livroEditado = widget.livro!.copyWith(
-          titulo: _tituloController.text,
-          autor: _autorController.text,
-          categoria: _categoriaController.text,
+          titulo: _tituloController.text.trim(),
+          autor: _autorController.text.trim(),
+          categoria: _categoriaController.text.trim(),
         );
         await getIt<AtualizarLivroUseCase>().execute(livroEditado);
       }
       if (mounted) {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Livro salvo com sucesso!')),
+          const SnackBar(
+            content: Text('Sucesso: O catálogo foi atualizado com o novo livro.'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text('Erro: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -71,43 +78,53 @@ class _LivroFormPageState extends State<LivroFormPage> {
         title: Text(widget.livro == null ? 'Cadastrar Livro' : 'Editar Livro'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Semantics(
-                label: 'Título do livro',
+                label: 'Título do livro para identificação no acervo',
                 child: TextFormField(
                   controller: _tituloController,
-                  decoration: const InputDecoration(labelText: 'Título'),
-                  validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Título do Livro',
+                    hintText: 'Ex: Dom Casmurro',
+                  ),
+                  validator: (v) => ValidatorHelper.validarObrigatorio(v, 'Título'),
                 ),
               ),
               const SizedBox(height: 16),
               Semantics(
-                label: 'Autor do livro',
+                label: 'Nome do autor ou responsável pela obra',
                 child: TextFormField(
                   controller: _autorController,
-                  decoration: const InputDecoration(labelText: 'Autor'),
-                  validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Autor',
+                    hintText: 'Ex: Machado de Assis',
+                  ),
+                  validator: (v) => ValidatorHelper.validarObrigatorio(v, 'Autor'),
                 ),
               ),
               const SizedBox(height: 16),
               Semantics(
-                label: 'Categoria do livro',
+                label: 'Gênero ou categoria literária',
                 child: TextFormField(
                   controller: _categoriaController,
-                  decoration: const InputDecoration(labelText: 'Categoria'),
-                  validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Categoria',
+                    hintText: 'Ex: Romance, Suspense, Técnico',
+                  ),
+                  validator: (v) => ValidatorHelper.validarObrigatorio(v, 'Categoria'),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
                       onPressed: _salvar,
-                      child: const Text('SALVAR LIVRO'),
+                      child: const Text('SALVAR NO ACERVO'),
                     ),
             ],
           ),

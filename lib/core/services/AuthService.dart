@@ -1,19 +1,21 @@
 import '../../domain/entities/usuario.dart';
 import '../../domain/repositories/usuario_repository.dart';
 import '../errors/exceptions.dart';
+import 'CacheService.dart';
 
 class AuthService {
   final UsuarioRepository _usuarioRepository;
-  Usuario? _usuarioLogado;
+  final CacheService _cacheService;
+  
+  static const String _sessionKey = 'usuario_logado';
   int _loginAttempts = 0;
   DateTime? _lastAttemptTime;
 
-  AuthService(this._usuarioRepository);
+  AuthService(this._usuarioRepository, this._cacheService);
 
-  Usuario? get usuarioLogado => _usuarioLogado;
+  Usuario? get usuarioLogado => _cacheService.get<Usuario>(_sessionKey);
 
   Future<Usuario> login(String email, String senha) async {
-    // T-UNIT-AUTH-003: Rate Limiting
     if (_loginAttempts >= 5 && _lastAttemptTime != null) {
       if (DateTime.now().difference(_lastAttemptTime!).inMinutes < 1) {
         throw RateLimitException('Muitas tentativas. Tente novamente em 1 minuto.');
@@ -34,16 +36,16 @@ class AuthService {
       throw AuthException('Usuário inativo');
     }
 
-    _usuarioLogado = usuario;
+    _cacheService.save(_sessionKey, usuario);
     _loginAttempts = 0;
     return usuario;
   }
 
   void logout() {
-    _usuarioLogado = null;
+    _cacheService.remove(_sessionKey);
   }
 
   int? getUsuarioIdAutenticado() {
-    return _usuarioLogado?.id;
+    return usuarioLogado?.id;
   }
 }

@@ -7,7 +7,6 @@ import '../../domain/usecases/InativarLivroUseCase.dart';
 import '../../core/services/AuthService.dart';
 import '../../core/constants/app_constants.dart';
 import '../../app/routes/app_routes.dart';
-import 'livro_form_page.dart';
 
 class CatalogoPage extends StatefulWidget {
   const CatalogoPage({super.key});

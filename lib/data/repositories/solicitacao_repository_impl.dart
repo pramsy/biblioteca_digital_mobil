@@ -1,16 +1,13 @@
 import '../../domain/entities/solicitacao.dart';
 import '../../domain/repositories/solicitacao_repository.dart';
 import '../models/solicitacao_model.dart';
-import '../../core/services/DatabaseService.dart';
+import 'base_repository.dart';
 
-class SolicitacaoRepositoryImpl implements SolicitacaoRepository {
-  final DatabaseService _databaseService;
-
-  SolicitacaoRepositoryImpl(this._databaseService);
+class SolicitacaoRepositoryImpl extends BaseRepository implements SolicitacaoRepository {
+  SolicitacaoRepositoryImpl(super.databaseService);
 
   @override
   Future<int> enviarSolicitacao(Solicitacao solicitacao) async {
-    final db = await _databaseService.database;
     final model = SolicitacaoModel(
       usuarioId: solicitacao.usuarioId,
       assunto: solicitacao.assunto,
@@ -18,13 +15,12 @@ class SolicitacaoRepositoryImpl implements SolicitacaoRepository {
       prioridade: solicitacao.prioridade,
       dataCriacao: solicitacao.dataCriacao,
     );
-    return await db.insert('Solicitacoes', model.toMap());
+    return await insert('Solicitacoes', model.toMap());
   }
 
   @override
   Future<void> responderSolicitacao(int id, String resposta, String status, int respondidoPorId) async {
-    final db = await _databaseService.database;
-    await db.update(
+    await update(
       'Solicitacoes',
       {
         'resposta': resposta,
@@ -32,29 +28,26 @@ class SolicitacaoRepositoryImpl implements SolicitacaoRepository {
         'dataResposta': DateTime.now().toIso8601String(),
         'respondidoPorId': respondidoPorId,
       },
-      where: 'id = ?',
-      whereArgs: [id],
+      'id = ?',
+      [id],
     );
   }
 
   @override
   Future<List<Solicitacao>> getSolicitacoesByUsuario(int usuarioId) async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Solicitacoes', where: 'usuarioId = ?', whereArgs: [usuarioId]);
+    final maps = await query('Solicitacoes', where: 'usuarioId = ?', whereArgs: [usuarioId]);
     return maps.map((e) => SolicitacaoModel.fromMap(e)).toList();
   }
 
   @override
   Future<List<Solicitacao>> getAllSolicitacoes() async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Solicitacoes');
+    final maps = await query('Solicitacoes');
     return maps.map((e) => SolicitacaoModel.fromMap(e)).toList();
   }
 
   @override
   Future<Solicitacao?> getSolicitacaoById(int id) async {
-    final db = await _databaseService.database;
-    final maps = await db.query('Solicitacoes', where: 'id = ?', whereArgs: [id]);
+    final maps = await query('Solicitacoes', where: 'id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) {
       return SolicitacaoModel.fromMap(maps.first);
     }

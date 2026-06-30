@@ -1,35 +1,30 @@
-# Plano de Testes Mobile - Sistema de Biblioteca Digital
+# Plano de Testes Mobile - Sistema de Biblioteca Digital (Otimizado)
 
-## 1. Mapeamento de Testes Unitários (UseCases)
+## 1. Mapeamento de Testes Unitários
 
 ### 1.1 Gestão de Usuários e Hierarquia
-- **T-UNIT-USR-001**: Administrador Inicial consegue cadastrar um perfil ADMIN. (Sucesso)
-- **T-UNIT-USR-002**: Administrador comum (ADMIN) tenta cadastrar um perfil ADMIN. (Falha: UnauthorizedException)
-- **T-UNIT-USR-003**: Cadastro de usuário com e-mail já existente. (Falha: UserConflictException)
-- **T-UNIT-USR-004**: Cadastro com senha fraca (menos de 8 caracteres ou sem números). (Falha: WeakPasswordException)
-- **T-UNIT-USR-005**: Inativação de um Administrador por outro Administrador comum. (Falha: UnauthorizedException)
+- **T-UNIT-USR-001**: Admin Inicial cadastra outro Admin.
+- **T-UNIT-USR-002**: Admin comum tenta cadastrar Admin (Bloqueio).
+- **T-UNIT-USR-003**: Validação de senha e e-mail único.
 
-### 1.2 Autenticação
-- **T-UNIT-AUTH-001**: Login com credenciais válidas e status ATIVO. (Sucesso)
-- **T-UNIT-AUTH-002**: Login com usuário de status INATIVO. (Falha: AuthException)
-- **T-UNIT-AUTH-003**: Bloqueio por Rate Limiting após 5 tentativas falhas. (Sucesso: RateLimitException)
+### 1.2 Performance e Otimização (Novos)
+- **T-UNIT-OPT-001**: Verificação de Cache: A segunda consulta ao catálogo deve retornar dados da memória (CacheService).
+- **T-UNIT-OPT-002**: Fila de Tarefas: Garantir que um job adicionado à JobQueueService seja executado de forma assíncrona.
+- **T-UNIT-OPT-003**: Invalidação de Cache: Após cadastrar um livro, o cache do catálogo deve ser limpo.
 
-### 1.3 Gestão de Acervo e Empréstimos
-- **T-UNIT-BOK-001**: Cadastro de livro por Bibliotecário. (Sucesso)
-- **T-UNIT-LON-001**: Registro de empréstimo de livro com status DISPONIVEL. (Sucesso)
-- **T-UNIT-LON-002**: Registro de empréstimo de livro já EMPRESTADO. (Falha: BookUnavailableException)
+### 1.3 Autenticação
+- **T-UNIT-AUTH-001**: Login com sucesso e persistência em cache da sessão.
+- **T-UNIT-AUTH-002**: Bloqueio por Rate Limiting.
 
 ## 2. Testes de Integração (SQLite)
-- **T-INT-DB-001**: Verificação da criação de tabelas na inicialização do banco.
-- **T-INT-DB-002**: Validação de Atomicidade: Falha na atualização do status do livro deve reverter a criação do registro de empréstimo (Rollback).
+- **T-INT-DB-001**: Criação de tabelas.
+- **T-INT-DB-002**: Transações atômicas com Rollback.
 
-## 3. Testes de Interface e Acessibilidade (Widget Tests)
-- **T-WID-UI-001**: Verificação de Semântica e Rótulos na tela de Login.
-- **T-WID-UI-002**: Visibilidade de Menus: Botão "Cadastrar Administrador" deve estar oculto para o perfil ADMIN.
-- **T-WID-UI-003**: Feedback Visual: Exibição de Snackbar após erro de login.
+## 3. Testes de Interface (Widget)
+- **T-WID-UI-001**: Semântica de Acessibilidade.
+- **T-WID-UI-002**: Menus contextuais por perfil.
 
-## 4. Instruções de Execução
-Para rodar todos os testes automatizados:
+## 4. Instruções
 ```bash
 flutter test
 ```

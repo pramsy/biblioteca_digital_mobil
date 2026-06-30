@@ -1,20 +1,22 @@
 # Biblioteca Digital - Sistema Mobile
 
-Sistema de gestão de biblioteca digital desenvolvido em Flutter, focado em acessibilidade e controle hierárquico, seguindo os princípios de Clean Architecture.
+Sistema de gestão de biblioteca digital desenvolvido em Flutter, focado em acessibilidade, seguindo os princípios de Clean Architecture e otimizado com Cache e Background Jobs.
 
 ## 🚀 Objetivo do Projeto
 O aplicativo fornece uma plataforma acessível para consulta de acervo, gestão de empréstimos e comunicação via solicitações, com um rigoroso controle de permissões por perfil.
+
+## 🏗️ Arquitetura e Otimizações
+- **Camada de Domínio**: Entidades e Use Cases contendo as regras de negócio e hierarquia.
+- **Camada de Dados**: Repositórios utilizando SQLite para persistência local, refatorados com `BaseRepository` para redução de código duplicado.
+- **Cache**: Implementação de `CacheService` para persistência em memória de sessões e consultas ao catálogo, melhorando a velocidade de resposta.
+- **Fila de Tarefas**: `JobQueueService` para processamento assíncrono de operações secundárias (notificações, logs), garantindo uma UI fluida.
+- **Camada de Apresentação**: Widgets Flutter com foco em Acessibilidade (Semantics, Focus, Contraste).
 
 ## 👥 Perfis e Hierarquia
 - **Administrador Inicial**: Único capaz de criar outros Administradores. Possui controle total do sistema.
 - **Administrador**: Gerencia Bibliotecários e Leitores. Emite relatórios e acompanha perfis.
 - **Bibliotecário**: Responsável pela gestão técnica do acervo (Livros) e atendimento de solicitações.
 - **Leitor**: Realiza auto-cadastro, consulta o catálogo, faz empréstimos e envia solicitações.
-
-## 🏗️ Arquitetura (Clean Architecture)
-- **Camada de Domínio**: Entidades e Use Cases contendo as regras de negócio e hierarquia.
-- **Camada de Dados**: Repositórios e Models utilizando SQLite para persistência local.
-- **Camada de Apresentação**: Widgets Flutter com foco em Acessibilidade (Semantics, Focus, Contraste).
 
 ## 🔑 Acesso Inicial (Seed)
 Na primeira execução, o sistema gera automaticamente:
@@ -34,11 +36,11 @@ Na primeira execução, o sistema gera automaticamente:
 
 ## 🧪 Testes Automatizados
 O projeto utiliza uma pirâmide de testes para garantir a estabilidade:
-- **Testes Unitários**: Validação de regras de negócio isoladas.
-- **Testes de Integração**: Validação de persistência e transações no SQLite.
-- **Testes de Widget**: Validação de interface e acessibilidade.
+- **Unitários**: Validação de regras de negócio e novas otimizações (Cache/Jobs).
+- **Integração**: Validação de persistência e transações no SQLite.
+- **Widget**: Validação de interface e acessibilidade.
 
 Execute com: `flutter test`
 
 ---
-Documentação atualizada conforme a versão estável do sistema.
+Documentação atualizada conforme a versão otimizada do sistema.
