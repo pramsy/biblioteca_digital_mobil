@@ -1,3 +1,4 @@
+import 'package:bcrypt/bcrypt.dart';
 import '../../domain/entities/usuario.dart';
 import '../../domain/repositories/usuario_repository.dart';
 import '../errors/exceptions.dart';
@@ -26,18 +27,23 @@ class AuthService {
 
     final usuario = await _usuarioRepository.getUsuarioByEmail(email);
 
-    if (usuario == null || usuario.senha != senha) {
+    // V01: BCrypt Password Verification
+    if (usuario == null || !BCrypt.checkpw(senha, usuario.senha)) {
       _loginAttempts++;
       _lastAttemptTime = DateTime.now();
+      // V05: Basic Security Log
+      print('SECURITY ALERT: Falha de login para email: $email');
       throw AuthException('Credenciais inválidas');
     }
 
     if (usuario.status == 'INATIVO') {
+      print('SECURITY ALERT: Tentativa de login em conta inativa: $email');
       throw AuthException('Usuário inativo');
     }
 
     _cacheService.save(_sessionKey, usuario);
     _loginAttempts = 0;
+    print('SECURITY INFO: Login bem-sucedido: $email');
     return usuario;
   }
 

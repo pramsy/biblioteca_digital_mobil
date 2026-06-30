@@ -1,0 +1,56 @@
+ROTEIRO DE APRESENTAÇÃO - SISTEMA DE BIBLIOTECA DIGITAL
+
+Slide 1: Capa
+- Título: Sistema de Gestão de Biblioteca  Arquitetura Limpa com Flutter
+- Temática: Tecnologia a serviço da leiturDigital
+                                          - Subtítulo: Acessibilidade, Performance ea.
+
+Slide 2: O Problema e a Solução
+- Contexto: Acervos físicos com difícil acesso e falta de acessibilidade.
+- Solução: Aplicativo mobile centralizado para consulta, reserva e gestão de livros.
+- Diferencial: Foco total na experiência do usuário e inclusão (WCAG).
+
+Slide 3: Arquitetura Técnica
+- Padrão: Clean Architecture (Arquitetura Limpa).
+- Camadas:
+  * Domain: Regras de negócio puras e Use Cases.
+  * Data: Repositórios SQLite com persistência local.
+  * Core: Serviços transversais (Auth, Cache, Jobs).
+  * Presentation: UI com Material Design 3.
+
+Slide 4: Governança e Perfis
+- Administrador Inicial: Gestor mestre e criador de novos admins.
+- Administrador: Gestor operacional (usuários, bibliotecários, relatórios).
+- Bibliotecário: Gestor do acervo (livros e solicitações).
+- Leitor: Usuário final (empréstimos e suporte).
+
+Slide 5: Funcionalidades de Acervo
+- Catálogo: Busca inteligente e filtros por autor/categoria.
+- Empréstimos: Ciclo de vida completo (solicitação, renovação e devolução).
+- Transações: Segurança de dados via transações atômicas no SQLite.
+
+Slide 6: Acessibilidade (Compromisso WCAG)
+- Semântica: Rótulos descritivos para leitores de tela em 100% da interface.
+- Ergonomia: Áreas de clique (Target Size) padronizadas em 48x48dp.
+- Visual: Contraste validado e tipografia escalável.
+
+Slide 7: Desempenho e Otimização
+- CacheService: Navegação instantânea no catálogo via memória RAM.
+- JobQueueService: Processamento de tarefas pesadas em background.
+- UI Fluida: Feedback constante de loading e estados vazios.
+
+Slide 8: Qualidade e Testes (TDD)
+- Estratégia: Test-Driven Development.
+- Cobertura:
+  * Testes Unitários (UseCases).
+  * Testes de Integração (Banco de Dados).
+  * Testes de Widget (Acessibilidade e Layout).
+
+Slide 9: Futuro do Projeto
+- Sincronização em nuvem (API REST).
+- Autenticação Biométrica.
+- Scanner de ISBN/QR Code para registro de livros físicos.
+
+Slide 10: Encerramento
+- Recapitulação: Um sistema escalável, limpo e inclusivo.
+- Perguntas e Respostas.

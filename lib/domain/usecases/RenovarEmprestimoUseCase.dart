@@ -1,16 +1,29 @@
 import '../repositories/emprestimo_repository.dart';
+import '../../core/services/AuthService.dart';
 import '../../core/errors/exceptions.dart';
+import '../../core/constants/app_constants.dart';
 
 class RenovarEmprestimoUseCase {
   final EmprestimoRepository _repository;
+  final AuthService _authService;
 
-  RenovarEmprestimoUseCase(this._repository);
+  RenovarEmprestimoUseCase(this._repository, this._authService);
 
   Future<void> execute(int emprestimoId) async {
-    // T-UNIT-LON-004: Renovação Válida
+    final executor = _authService.usuarioLogado;
+    if (executor == null) throw UnauthorizedException('Usuário não autenticado.');
+
     final emprestimo = await _repository.getEmprestimoById(emprestimoId);
     if (emprestimo == null) {
       throw ValidationException('Empréstimo não encontrado.');
+    }
+
+    // V02: IDOR Protection
+    bool isOwner = emprestimo.usuarioId == executor.id;
+    bool isStaff = executor.perfil != AppConstants.profileLeitor;
+
+    if (!isOwner && !isStaff) {
+      throw UnauthorizedException('Sem permissão para renovar este empréstimo.');
     }
 
     if (emprestimo.status == 'DEVOLVIDO') {

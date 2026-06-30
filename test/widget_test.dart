@@ -19,6 +19,6 @@ void main() {
     await tester.pumpWidget(const MyApp());
 
     // Verifica se a tela de login aparece (botão ENTRAR)
-    expect(find.text('ENTRAR'), findsOneWidget);
+    expect(find.text('ENTRAR AGORA'), findsOneWidget);
   });
 }

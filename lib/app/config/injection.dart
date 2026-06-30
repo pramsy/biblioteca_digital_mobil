@@ -57,7 +57,7 @@ Future<void> setupInjection() async {
   getIt.registerLazySingleton(() => EnviarSolicitacaoUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => ResponderSolicitacaoUseCase(getIt(), getIt(), getIt()));
   getIt.registerLazySingleton(() => RegistrarEmprestimoUseCase(getIt(), getIt()));
-  getIt.registerLazySingleton(() => RegistrarDevolucaoUseCase(getIt()));
-  getIt.registerLazySingleton(() => RenovarEmprestimoUseCase(getIt()));
+  getIt.registerLazySingleton(() => RegistrarDevolucaoUseCase(getIt(), getIt()));
+  getIt.registerLazySingleton(() => RenovarEmprestimoUseCase(getIt(), getIt()));
   getIt.registerLazySingleton(() => GerarRelatoriosUseCase(getIt(), getIt()));
 }

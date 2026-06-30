@@ -1,3 +1,4 @@
+import 'package:bcrypt/bcrypt.dart';
 import '../entities/usuario.dart';
 import '../repositories/usuario_repository.dart';
 import '../../core/services/AuthService.dart';
@@ -24,7 +25,6 @@ class CadastrarUsuarioUseCase {
         throw UnauthorizedException('Sem permissão para cadastrar Bibliotecários.');
       }
     } else if (usuario.perfil == AppConstants.profileLeitor) {
-      // Se não houver executor, é auto-cadastro. Se houver, deve ser admin/biblio
       if (executor != null && 
           executor.perfil != AppConstants.profileAdminInicial && 
           executor.perfil != AppConstants.profileAdmin &&
@@ -46,6 +46,10 @@ class CadastrarUsuarioUseCase {
       throw UserConflictException('E-mail já cadastrado.');
     }
 
-    return await _repository.cadastrarUsuario(usuario);
+    // V01: Password Hashing (Salted BCrypt)
+    final hashedPassword = BCrypt.hashpw(usuario.senha, BCrypt.gensalt());
+    final usuarioComHash = usuario.copyWith(senha: hashedPassword);
+
+    return await _repository.cadastrarUsuario(usuarioComHash);
   }
 }
