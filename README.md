@@ -1,33 +1,31 @@
 # Biblioteca Digital - Sistema Mobile
 
-Sistema de gestão de biblioteca digital desenvolvido em Flutter, focado em acessibilidade, seguindo os princípios de Clean Architecture e otimizado com Cache e Background Jobs.
+Sistema de gestão de biblioteca digital desenvolvido em Flutter, focado em **acessibilidade (WCAG)**, controle hierárquico e alto desempenho via **Clean Architecture**.
 
 ## 🚀 Objetivo do Projeto
-O aplicativo fornece uma plataforma acessível para consulta de acervo, gestão de empréstimos e comunicação via solicitações, com um rigoroso controle de permissões por perfil.
-
-## 🏗️ Arquitetura e Otimizações
-- **Camada de Domínio**: Entidades e Use Cases contendo as regras de negócio e hierarquia.
-- **Camada de Dados**: Repositórios utilizando SQLite para persistência local, refatorados com `BaseRepository` para redução de código duplicado.
-- **Cache**: Implementação de `CacheService` para persistência em memória de sessões e consultas ao catálogo, melhorando a velocidade de resposta.
-- **Fila de Tarefas**: `JobQueueService` para processamento assíncrono de operações secundárias (notificações, logs), garantindo uma UI fluida.
-- **Camada de Apresentação**: Widgets Flutter com foco em Acessibilidade (Semantics, Focus, Contraste).
+Fornecer uma experiência fluida para leitores consultarem acervos e gerenciarem empréstimos, garantindo segurança e ferramentas de gestão robustas para administradores.
 
 ## 👥 Perfis e Hierarquia
-- **Administrador Inicial**: Único capaz de criar outros Administradores. Possui controle total do sistema.
-- **Administrador**: Gerencia Bibliotecários e Leitores. Emite relatórios e acompanha perfis.
-- **Bibliotecário**: Responsável pela gestão técnica do acervo (Livros) e atendimento de solicitações.
-- **Leitor**: Realiza auto-cadastro, consulta o catálogo, faz empréstimos e envia solicitações.
+- **Administrador Inicial**: Controle total, incluindo criação de outros Administradores.
+- **Administrador**: Gestão de Bibliotecários, Leitores e acervo. Emite relatórios gerenciais.
+- **Bibliotecário**: Gestão técnica de livros, atendimento de solicitações e validação de empréstimos.
+- **Leitor**: Auto-cadastro, consulta, reserva de livros e suporte.
 
-## 🔑 Acesso Inicial (Seed)
-Na primeira execução, o sistema gera automaticamente:
-- **E-mail:** `admin@biblioteca.com`
-- **Senha:** `admin123`
-- **Perfil:** `ADMIN_INICIAL`
+## 🏗️ Arquitetura e Otimizações
+- **Domínio**: Use Cases isolados para cada regra de negócio (Cadastro, Empréstimo, Inativação).
+- **Dados**: Persistência SQLite local com **Atomicidade** em transações.
+- **Performance**: 
+    - **CacheService**: Redução de IO em disco para catálogos e sessões.
+    - **JobQueueService**: Processamento assíncrono de notificações e logs.
+- **UI/UX**: 
+    - Estados explícitos de **Loading**, **Empty** e **Error**.
+    - Mensagens de validação orientadas à ação ("Intervenção").
+    - Design System baseado em **Material 3**.
 
 ## ♿ Acessibilidade
-- Tamanho de toque mínimo de 48dp.
-- Rótulos semânticos completos para leitores de tela.
-- Contraste de texto validado (padrão WCAG).
+- Tamanho de toque padrão de 48dp.
+- Suporte total a leitores de tela via `Semantics`.
+- Contraste de cor validado (padrão WCAG AA).
 
 ## 🛠️ Como Executar
 1. Instale as dependências: `flutter pub get`.
@@ -35,12 +33,10 @@ Na primeira execução, o sistema gera automaticamente:
 3. Execute o projeto: `flutter run`.
 
 ## 🧪 Testes Automatizados
-O projeto utiliza uma pirâmide de testes para garantir a estabilidade:
-- **Unitários**: Validação de regras de negócio e novas otimizações (Cache/Jobs).
-- **Integração**: Validação de persistência e transações no SQLite.
-- **Widget**: Validação de interface e acessibilidade.
-
-Execute com: `flutter test`
+```bash
+# Rodar todos os testes unitários, integração e UI
+flutter test
+```
 
 ---
-Documentação atualizada conforme a versão otimizada do sistema.
+Documentação alinhada com as versões de Interface e Performance.

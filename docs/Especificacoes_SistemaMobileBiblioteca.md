@@ -1,50 +1,41 @@
-# Especificação do Projeto - Biblioteca Digital
+# Especificação do Projeto - Biblioteca Digital (Refinamento de Interface)
 
 ## 1. Visão Geral
-Sistema mobile para gestão de acervo bibliotecário, focado em acessibilidade e controle hierárquico de permissões.
+Sistema mobile para gestão de acervo bibliotecário, focado em acessibilidade, controle hierárquico e excelência na experiência do usuário (UX).
 
-## 2. Perfis de Usuário e Hierarquia
-- **Administrador Inicial (ADMIN_INICIAL)**: Criado via Seed. Possui permissão total, incluindo a criação de outros Administradores.
-- **Administrador (ADMIN)**: Pode gerenciar Bibliotecários e Leitores. Não pode criar ou gerenciar outros Administradores.
-- **Bibliotecário (BIBLIOTECARIO)**: Focado na gestão do acervo (livros), empréstimos e atendimento de solicitações.
-- **Leitor (LEITOR)**: Usuário final que consome o acervo, realiza empréstimos e envia solicitações.
+## 2. Padrões de Interface e Design System
+- **Design System**: Baseado em Material Design 3.
+- **Cores**: Semente `deepPurple`. Contraste mínimo de 4.5:1 (WCAG AA).
+- **Espaçamento**: Grid de 8dp. Padding padrão de telas: 16dp ou 24dp para formulários.
+- **Tipografia**: Uso de estilos nativos do `Theme.of(context).textTheme` para garantir escalabilidade de fonte.
+- **Componentes Reutilizáveis**:
+    - `ElevatedButton`: Altura mínima de 48dp.
+    - `TextFormField`: Com ícones de prefixo e mensagens de erro descritivas ("Intervenção").
+    - `Card`: Para itens de lista com elevação sutil.
 
-## 3. Arquitetura de Arquivos e Responsabilidades
+## 3. Estados de Tela e Feedbacks
+- **Carregamento (Loading)**: Uso de `CircularProgressIndicator` centralizado ou Skeletons durante chamadas assíncronas.
+- **Estado Vazio (Empty State)**: Mensagens centralizadas com ícones quando não houver dados (ex: "Nenhum livro encontrado").
+- **Erro (Error State)**: Snackbars flutuantes com cores semânticas (Vermelho para erro, Laranja para avisos, Verde para sucesso).
+- **Validação de Formulários**: Validação visual imediata ao perder o foco ou ao submeter, impedindo o envio de dados inválidos.
 
-### /lib/app/
-- `app.dart`: Configuração global do MaterialApp.
-- `config/injection.dart`: Injeção de dependência centralizada.
-- `routes/app_routes.dart`: Mapeamento de rotas.
-- `theme/app_theme.dart`: Padrões visuais acessíveis.
+## 4. Acessibilidade (Obrigatório)
+- **Semântica**: Atribuição de `Semantics` em todos os elementos interativos e imagens decorativas (excluir do leitor).
+- **Toque**: Áreas clicáveis com no mínimo 48x48dp.
+- **Navegação**: Ordem de foco lógica (topo para baixo, esquerda para direita).
 
-### /lib/core/
-- `constants/`: Strings de perfil, status e mensagens padrão.
-- `errors/`: Definições de Failures e Exceptions.
-- `services/`:
-    - `DatabaseService.dart`: Singleton SQLite.
-    - `AuthService.dart`: Gestão de sessão e Rate Limiting.
-    - `CacheService.dart`: Cache em memória para otimização de consultas frequentes.
-    - `JobQueueService.dart`: Fila de tarefas para processamento assíncrono em background.
-    - `AccessibilityService.dart`: Utilitários para Semântica.
+## 5. Fluxos de Navegação e Regras de Renderização
+- **Autenticação**: Redirecionamento condicional pós-login baseado no perfil.
+- **Dashboard Dinâmico**: 
+    - Renderização condicional de menus baseada em permissões:
+        - `ADMIN_INICIAL`: Acesso total + Cadastro de Admin.
+        - `ADMIN`: Gestão de usuários e acervo (exceto criar Admins).
+        - `BIBLIOTECARIO`: Gestão técnica de acervo e solicitações.
+        - `LEITOR`: Consulta e empréstimo.
+- **Catálogo**: Busca em tempo real com debounce (opcional) e feedback de "nenhum resultado".
 
-### /lib/domain/
-- `entities/`: Modelos puros.
-- `usecases/`: Regras de negócio atomizadas e testáveis.
-
-### /lib/data/
-- `models/`: Mapeamento de dados (toMap/fromMap).
-- `repositories/`: Implementações concretas com suporte a cache.
-
-## 4. Otimizações de Desempenho
-- **Cache de Dados**: Consultas ao catálogo e perfil do usuário são cacheadas em memória para reduzir acesso ao disco (SQLite).
-- **Processamento Assíncrono (Jobs)**: Operações que não requerem resposta imediata da UI (como logs e sincronizações internas) são enviadas para uma `JobQueue`.
-- **Boilerplate Reduction**: Uso de Mixins e classes base nos Repositórios para simplificar operações CRUD.
-
-## 5. Fluxos Principais
-1. **Inicialização**: `main.dart` -> Load Env -> Setup Injection -> Warm-up Cache -> Run App.
-2. **Autenticação**: Login -> Validação -> Cache de Sessão -> Direciona Dashboard.
-
-## 6. Critérios de Acessibilidade
-- Tamanho de toque mínimo: 48x48 pixels.
-- Uso de `Semantics` em todos os campos interativos.
-- Contraste WCAG (mínimo 4.5:1).
+## 6. Arquitetura de Apresentação
+- **Separação de Camadas**:
+    - `Features/UI`: Widgets de apresentação.
+    - `Domain/UseCases`: Lógica de transição de estados e regras.
+    - `App/Routes`: Desacoplamento da navegação.

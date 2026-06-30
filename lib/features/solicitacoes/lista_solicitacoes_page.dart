@@ -26,18 +26,23 @@ class _ListaSolicitacoesPageState extends State<ListaSolicitacoesPage> {
 
   Future<void> _carregarSolicitacoes() async {
     setState(() => _isLoading = true);
-    final authService = getIt<AuthService>();
-    final usuario = authService.usuarioLogado;
-    final repository = getIt<SolicitacaoRepository>();
+    try {
+      final authService = getIt<AuthService>();
+      final usuario = authService.usuarioLogado;
+      final repository = getIt<SolicitacaoRepository>();
 
-    if (usuario?.perfil == AppConstants.profileAdmin || 
-        usuario?.perfil == AppConstants.profileAdminInicial ||
-        usuario?.perfil == AppConstants.profileBibliotecario) {
-      _solicitacoes = await repository.getAllSolicitacoes();
-    } else {
-      _solicitacoes = await repository.getSolicitacoesByUsuario(usuario!.id!);
+      if (usuario?.perfil == AppConstants.profileAdmin || 
+          usuario?.perfil == AppConstants.profileAdminInicial ||
+          usuario?.perfil == AppConstants.profileBibliotecario) {
+        _solicitacoes = await repository.getAllSolicitacoes();
+      } else {
+        _solicitacoes = await repository.getSolicitacoesByUsuario(usuario!.id!);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _responder(Solicitacao solicitacao) async {
@@ -48,20 +53,21 @@ class _ListaSolicitacoesPageState extends State<ListaSolicitacoesPage> {
         title: const Text('Responder Solicitação'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Digite a resposta...'),
-          maxLines: 3,
+          decoration: const InputDecoration(hintText: 'Escreva sua resposta aqui...', border: OutlineInputBorder()),
+          maxLines: 4,
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
           ElevatedButton(
             onPressed: () async {
-              await getIt<ResponderSolicitacaoUseCase>().execute(solicitacao.id!, controller.text);
+              if (controller.text.trim().isEmpty) return;
+              await getIt<ResponderSolicitacaoUseCase>().execute(solicitacao.id!, controller.text.trim());
               if (mounted) {
                 Navigator.pop(context);
                 _carregarSolicitacoes();
               }
             },
-            child: const Text('RESPONDER'),
+            child: const Text('ENVIAR RESPOSTA'),
           ),
         ],
       ),
@@ -71,56 +77,82 @@ class _ListaSolicitacoesPageState extends State<ListaSolicitacoesPage> {
   @override
   Widget build(BuildContext context) {
     final usuario = getIt<AuthService>().usuarioLogado;
-    final canRespond = usuario?.perfil != AppConstants.profileLeitor;
+    final isLeitor = usuario?.perfil == AppConstants.profileLeitor;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Solicitações')),
+      appBar: AppBar(title: const Text('Atendimento e Suporte')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _solicitacoes.length,
-              itemBuilder: (context, index) {
-                final sol = _solicitacoes[index];
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: ExpansionTile(
-                    title: Text(sol.assunto),
-                    subtitle: Text('Status: ${sol.status} - Prioridade: ${sol.prioridade}'),
+          : _solicitacoes.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Descrição:', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text(sol.descricao),
-                            if (sol.resposta != null) ...[
-                              const Divider(),
-                              const Text('Resposta:', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Text(sol.resposta!),
-                            ],
-                            if (canRespond && sol.status == AppConstants.statusAberta) ...[
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => _responder(sol),
-                                child: const Text('RESPONDER'),
-                              ),
-                            ]
-                          ],
-                        ),
-                      )
+                      Icon(Icons.mark_chat_read_outlined, size: 64, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      Text(isLeitor ? 'Você não enviou solicitações.' : 'Nenhuma solicitação pendente.'),
                     ],
                   ),
-                );
-              },
-            ),
-      floatingActionButton: usuario?.perfil == AppConstants.profileLeitor
-          ? FloatingActionButton(
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: _solicitacoes.length,
+                  itemBuilder: (context, index) {
+                    final sol = _solicitacoes[index];
+                    final isAberta = sol.status == AppConstants.statusAberta;
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: ExpansionTile(
+                        leading: Icon(
+                          isAberta ? Icons.hourglass_empty : Icons.check_circle_outline,
+                          color: isAberta ? Colors.orange : Colors.green,
+                        ),
+                        title: Text(sol.assunto, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('Status: ${sol.status} • Prioridade: ${sol.prioridade}'),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Mensagem do Usuário:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                const SizedBox(height: 4),
+                                Text(sol.descricao),
+                                if (sol.resposta != null) ...[
+                                  const Divider(height: 24),
+                                  const Text('Resposta da Administração:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.deepPurple)),
+                                  const SizedBox(height: 4),
+                                  Text(sol.resposta!),
+                                ],
+                                if (!isLeitor && isAberta) ...[
+                                  const SizedBox(height: 16),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _responder(sol),
+                                      icon: const Icon(Icons.reply),
+                                      label: const Text('RESPONDER AGORA'),
+                                    ),
+                                  ),
+                                ]
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                ),
+      floatingActionButton: isLeitor
+          ? FloatingActionButton.extended(
               onPressed: () async {
                 final result = await Navigator.pushNamed(context, AppRoutes.solicitacaoForm);
                 if (result == true) _carregarSolicitacoes();
               },
-              child: const Icon(Icons.add),
+              icon: const Icon(Icons.add),
+              label: const Text('Nova Solicitação'),
             )
           : null,
     );

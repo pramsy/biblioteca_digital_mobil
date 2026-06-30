@@ -28,21 +28,30 @@ class _MeusEmprestimosPageState extends State<MeusEmprestimosPage> {
 
   Future<void> _carregarEmprestimos() async {
     setState(() => _isLoading = true);
-    final usuarioId = getIt<AuthService>().getUsuarioIdAutenticado();
-    if (usuarioId != null) {
-      final emprestimos = await getIt<EmprestimoRepository>().getEmprestimosByUsuario(usuarioId);
-      final list = <Map<String, dynamic>>[];
-      
-      for (var emp in emprestimos) {
-        final livro = await getIt<LivroRepository>().getLivroById(emp.livroId);
-        list.add({
-          'emprestimo': emp,
-          'livro': livro,
-        });
+    try {
+      final usuarioId = getIt<AuthService>().getUsuarioIdAutenticado();
+      if (usuarioId != null) {
+        final emprestimos = await getIt<EmprestimoRepository>().getEmprestimosByUsuario(usuarioId);
+        final list = <Map<String, dynamic>>[];
+        
+        for (var emp in emprestimos) {
+          final livro = await getIt<LivroRepository>().getLivroById(emp.livroId);
+          list.add({
+            'emprestimo': emp,
+            'livro': livro,
+          });
+        }
+        if (mounted) setState(() => _dadosEmprestimos = list);
       }
-      _dadosEmprestimos = list;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar seus empréstimos: $e'), backgroundColor: Colors.red[800]),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _devolver(int id) async {
@@ -50,7 +59,7 @@ class _MeusEmprestimosPageState extends State<MeusEmprestimosPage> {
       await getIt<RegistrarDevolucaoUseCase>().execute(id);
       _carregarEmprestimos();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -59,7 +68,7 @@ class _MeusEmprestimosPageState extends State<MeusEmprestimosPage> {
       await getIt<RenovarEmprestimoUseCase>().execute(id);
       _carregarEmprestimos();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -69,46 +78,87 @@ class _MeusEmprestimosPageState extends State<MeusEmprestimosPage> {
       appBar: AppBar(title: const Text('Meus Empréstimos')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _dadosEmprestimos.length,
-              itemBuilder: (context, index) {
-                final emp = _dadosEmprestimos[index]['emprestimo'] as Emprestimo;
-                final livro = _dadosEmprestimos[index]['livro'] as Livro?;
-                
-                return Card(
-                  margin: const EdgeInsets.all(8.0),
-                  child: ListTile(
-                    title: Text(livro?.titulo ?? 'Livro desconhecido'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Status: ${emp.status}'),
-                        Text('Previsão: ${DateHelper.formatDateTime(emp.dataPrevisaoDevolucao)}'),
-                        if (emp.dataDevolucao != null)
-                          Text('Devolvido em: ${DateHelper.formatDateTime(emp.dataDevolucao!)}'),
-                      ],
-                    ),
-                    trailing: emp.status == 'ATIVO' 
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.refresh, color: Colors.blue),
-                              onPressed: () => _renovar(emp.id!),
-                              tooltip: 'Renovar',
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.assignment_return, color: Colors.green),
-                              onPressed: () => _devolver(emp.id!),
-                              tooltip: 'Devolver',
-                            ),
-                          ],
-                        )
-                      : null,
+          : _dadosEmprestimos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history_outlined, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      const Text('Você não possui empréstimos registrados.', style: TextStyle(fontSize: 16)),
+                    ],
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: _dadosEmprestimos.length,
+                  itemBuilder: (context, index) {
+                    final emp = _dadosEmprestimos[index]['emprestimo'] as Emprestimo;
+                    final livro = _dadosEmprestimos[index]['livro'] as Livro?;
+                    final isAtivo = emp.status == 'ATIVO';
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Text(livro?.titulo ?? 'Livro desconhecido', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildInfoRow(Icons.info_outline, 'Status: ${emp.status}', color: isAtivo ? Colors.green : Colors.grey),
+                            _buildInfoRow(Icons.calendar_today, 'Previsão: ${DateHelper.formatDateTime(emp.dataPrevisaoDevolucao)}'),
+                            if (emp.dataDevolucao != null)
+                              _buildInfoRow(Icons.check_circle_outline, 'Devolvido em: ${DateHelper.formatDateTime(emp.dataDevolucao!)}', color: Colors.blue),
+                          ],
+                        ),
+                        trailing: isAtivo 
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildActionButton(Icons.refresh, 'Renovar', Colors.blue, () => _renovar(emp.id!)),
+                                    const SizedBox(width: 8),
+                                    _buildActionButton(Icons.assignment_return_outlined, 'Devolver', Colors.green, () => _devolver(emp.id!)),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : const Icon(Icons.done_all, color: Colors.blue),
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color ?? Colors.grey[600]),
+          const SizedBox(width: 6),
+          Text(text, style: TextStyle(color: color ?? Colors.grey[800], fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, String label, Color color, VoidCallback onPressed) {
+    return Semantics(
+      label: '$label empréstimo',
+      child: IconButton(
+        icon: Icon(icon, color: color),
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          backgroundColor: color.withOpacity(0.1),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
     );
   }
 }

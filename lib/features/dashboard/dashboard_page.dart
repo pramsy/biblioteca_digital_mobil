@@ -25,114 +25,177 @@ class DashboardPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          IconButton(
-            onPressed: () {
-              authService.logout();
-              Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-            },
-            icon: const Icon(Icons.logout),
+          Semantics(
+            label: 'Encerrar sessão e sair do aplicativo',
+            child: IconButton(
+              onPressed: () {
+                authService.logout();
+                Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+              },
+              icon: const Icon(Icons.logout_rounded),
+            ),
           )
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Bem-vindo, ${usuario?.nome ?? 'Usuário'}!',
-              style: Theme.of(context).textTheme.headlineSmall,
+            Card(
+              elevation: 0,
+              color: Colors.deepPurple[50],
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.deepPurple,
+                      child: Text(
+                        usuario?.nome.substring(0, 1).toUpperCase() ?? 'U',
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Olá, ${usuario?.nome ?? 'Usuário'}!',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'Perfil: ${usuario?.perfil ?? ''}',
+                            style: TextStyle(color: Colors.deepPurple[700]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            Text('Perfil: ${usuario?.perfil ?? ''}'),
             const SizedBox(height: 24),
             
-            const Text('Ações do Leitor', style: TextStyle(fontWeight: FontWeight.bold)),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.book),
-              title: const Text('Consultar Catálogo'),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.catalogo),
+            _buildSectionTitle('Serviços do Leitor'),
+            _buildActionTile(
+              context, 
+              icon: Icons.auto_stories_outlined, 
+              title: 'Consultar Catálogo', 
+              subtitle: 'Veja os livros disponíveis para empréstimo',
+              route: AppRoutes.catalogo,
             ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('Meus Empréstimos'),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.meusEmprestimos),
+            _buildActionTile(
+              context, 
+              icon: Icons.history_outlined, 
+              title: 'Meus Empréstimos', 
+              subtitle: 'Acompanhe prazos e realize devoluções',
+              route: AppRoutes.meusEmprestimos,
             ),
-            ListTile(
-              leading: const Icon(Icons.message),
-              title: const Text('Minhas Solicitações'),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
+            _buildActionTile(
+              context, 
+              icon: Icons.contact_support_outlined, 
+              title: 'Minhas Solicitações', 
+              subtitle: 'Envie dúvidas e veja as respostas',
+              route: AppRoutes.listaSolicitacoes,
             ),
             
             if (canManageBooks || canManageUsers) ...[
               const SizedBox(height: 16),
-              const Text('Administração', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Divider(),
+              _buildSectionTitle('Administração do Sistema'),
               
               if (canManageBooks)
-                ListTile(
-                  leading: const Icon(Icons.add_business),
-                  title: const Text('Gerenciar Acervo (Livros)'),
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.catalogo),
+                _buildActionTile(
+                  context, 
+                  icon: Icons.library_add_outlined, 
+                  title: 'Gerenciar Acervo', 
+                  subtitle: 'Adicione, edite ou remova exemplares',
+                  route: AppRoutes.catalogo,
                 ),
-
-              ListTile(
-                leading: const Icon(Icons.history_edu),
-                title: const Text('Gerenciar Empréstimos'),
-                onTap: () => Navigator.pushNamed(context, AppRoutes.listaEmprestimos),
-              ),
 
               if (canManageUsers) ...[
                 if (isInitialAdmin)
-                  ListTile(
-                    leading: const Icon(Icons.person_add),
-                    title: const Text('Cadastrar Administrador'),
-                    onTap: () => Navigator.of(context).pushNamed(
-                      AppRoutes.usuarioForm,
-                      arguments: AppConstants.profileAdmin,
-                    ),
+                  _buildActionTile(
+                    context, 
+                    icon: Icons.admin_panel_settings_outlined, 
+                    title: 'Cadastrar Administrador', 
+                    subtitle: 'Crie novos perfis de gestão total',
+                    route: AppRoutes.usuarioForm,
+                    args: AppConstants.profileAdmin,
                   ),
-                ListTile(
-                  leading: const Icon(Icons.person_add_alt_1),
-                  title: const Text('Cadastrar Bibliotecário'),
-                  onTap: () => Navigator.of(context).pushNamed(
-                    AppRoutes.usuarioForm,
-                    arguments: AppConstants.profileBibliotecario,
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.people),
-                  title: const Text('Gerenciar Usuários'),
-                  onTap: () {
-                    // Aqui poderia abrir uma lista de usuários para inativar/editar
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Funcionalidade de Listagem de Usuários em desenvolvimento.')),
-                    );
-                  },
+                _buildActionTile(
+                  context, 
+                  icon: Icons.badge_outlined, 
+                  title: 'Cadastrar Bibliotecário', 
+                  subtitle: 'Adicione responsáveis pelo acervo',
+                  route: AppRoutes.usuarioForm,
+                  args: AppConstants.profileBibliotecario,
                 ),
               ],
 
               if (canRespondRequests)
-                ListTile(
-                  leading: const Icon(Icons.list_alt),
-                  title: const Text('Atender Solicitações'),
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.listaSolicitacoes),
+                _buildActionTile(
+                  context, 
+                  icon: Icons.rate_review_outlined, 
+                  title: 'Atender Solicitações', 
+                  subtitle: 'Responda pedidos dos leitores',
+                  route: AppRoutes.listaSolicitacoes,
                 ),
+              
+              _buildActionTile(
+                context, 
+                icon: Icons.list_alt_rounded, 
+                title: 'Gerenciar Empréstimos', 
+                subtitle: 'Visualize todas as locações ativas',
+                route: AppRoutes.listaEmprestimos,
+              ),
             ],
             
             if (canSeeReports) ...[
               const SizedBox(height: 16),
-              const Text('Relatórios', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.bar_chart),
-                title: const Text('Relatórios Gerenciais'),
-                onTap: () => Navigator.pushNamed(context, AppRoutes.relatorios),
+              _buildSectionTitle('Indicadores'),
+              _buildActionTile(
+                context, 
+                icon: Icons.analytics_outlined, 
+                title: 'Relatórios Gerenciais', 
+                subtitle: 'Acompanhe estatísticas de uso',
+                route: AppRoutes.relatorios,
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildActionTile(BuildContext context, {
+    required IconData icon, 
+    required String title, 
+    required String subtitle, 
+    required String route,
+    Object? args,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.deepPurple),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right, size: 20),
+        onTap: () => Navigator.pushNamed(context, route, arguments: args),
       ),
     );
   }

@@ -6,8 +6,6 @@ import '../../domain/entities/usuario.dart';
 import '../../domain/repositories/emprestimo_repository.dart';
 import '../../domain/repositories/livro_repository.dart';
 import '../../domain/repositories/usuario_repository.dart';
-import '../../domain/usecases/RegistrarDevolucaoUseCase.dart';
-import '../../domain/usecases/RenovarEmprestimoUseCase.dart';
 import '../../core/utils/date_helper.dart';
 
 class ListaEmprestimosPage extends StatefulWidget {
@@ -42,31 +40,11 @@ class _ListaEmprestimosPageState extends State<ListaEmprestimosPage> {
           'usuario': usuario,
         });
       }
-      _dadosEmprestimos = list;
+      if (mounted) setState(() => _dadosEmprestimos = list);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao carregar empréstimos: $e')));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _devolver(int id) async {
-    try {
-      await getIt<RegistrarDevolucaoUseCase>().execute(id);
-      _carregarEmprestimos();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-  }
-
-  Future<void> _renovar(int id) async {
-    try {
-      await getIt<RenovarEmprestimoUseCase>().execute(id);
-      _carregarEmprestimos();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -77,45 +55,30 @@ class _ListaEmprestimosPageState extends State<ListaEmprestimosPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _dadosEmprestimos.isEmpty
-              ? const Center(child: Text('Nenhum empréstimo registrado.'))
+              ? const Center(child: Text('Nenhum empréstimo registrado no sistema.'))
               : ListView.builder(
+                  padding: const EdgeInsets.all(12),
                   itemCount: _dadosEmprestimos.length,
                   itemBuilder: (context, index) {
                     final emp = _dadosEmprestimos[index]['emprestimo'] as Emprestimo;
                     final livro = _dadosEmprestimos[index]['livro'] as Livro?;
                     final usuario = _dadosEmprestimos[index]['usuario'] as Usuario?;
+                    final isAtivo = emp.status == 'ATIVO';
                     
                     return Card(
-                      margin: const EdgeInsets.all(8.0),
+                      margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
-                        title: Text(livro?.titulo ?? 'Livro desconhecido'),
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Text(livro?.titulo ?? 'Livro desconhecido', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Leitor: ${usuario?.nome ?? 'Desconhecido'}'),
-                            Text('Status: ${emp.status}'),
-                            Text('Previsão: ${DateHelper.formatDateTime(emp.dataPrevisaoDevolucao)}'),
-                            if (emp.dataDevolucao != null)
-                              Text('Devolvido em: ${DateHelper.formatDateTime(emp.dataDevolucao!)}'),
+                            Text('Status: ${emp.status}', style: TextStyle(color: isAtivo ? Colors.green : Colors.grey, fontWeight: FontWeight.bold)),
+                            Text('Devolução prevista: ${DateHelper.formatDateTime(emp.dataPrevisaoDevolucao)}'),
                           ],
                         ),
-                        trailing: emp.status == 'ATIVO' 
-                          ? Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.refresh, color: Colors.blue),
-                                  onPressed: () => _renovar(emp.id!),
-                                  tooltip: 'Renovar',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.assignment_return, color: Colors.green),
-                                  onPressed: () => _devolver(emp.id!),
-                                  tooltip: 'Registrar Devolução',
-                                ),
-                              ],
-                            )
-                          : null,
+                        trailing: isAtivo ? const Icon(Icons.pending_actions, color: Colors.orange) : const Icon(Icons.check_circle, color: Colors.blue),
                       ),
                     );
                   },

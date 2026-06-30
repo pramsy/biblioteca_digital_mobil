@@ -18,11 +18,12 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
   Future<void> _gerar() async {
     setState(() => _isLoading = true);
     try {
-      _dados = await getIt<GerarRelatoriosUseCase>().execute(_inicio, _fim);
+      final resultado = await getIt<GerarRelatoriosUseCase>().execute(_inicio, _fim);
+      if (mounted) setState(() => _dados = resultado);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao gerar: $e'), backgroundColor: Colors.red));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -32,36 +33,59 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
       appBar: AppBar(title: const Text('Relatórios Gerenciais')),
       body: Column(
         children: [
-          ListTile(
-            title: const Text('Período'),
-            subtitle: Text('${_inicio.day}/${_inicio.month} até ${_fim.day}/${_fim.month}'),
-            trailing: const Icon(Icons.date_range),
-            onTap: () async {
-              final picked = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-                initialDateRange: DateTimeRange(start: _inicio, end: _fim),
-              );
-              if (picked != null) {
-                setState(() {
-                  _inicio = picked.start;
-                  _fim = picked.end;
-                });
-              }
-            },
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.deepPurple[50],
+            child: Column(
+              children: [
+                const Text('Selecione o período para análise', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2023),
+                      lastDate: DateTime(2100),
+                      initialDateRange: DateTimeRange(start: _inicio, end: _fim),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _inicio = picked.start;
+                        _fim = picked.end;
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.date_range),
+                  label: Text('${_inicio.day}/${_inicio.month}/${_inicio.year} - ${_fim.day}/${_fim.month}/${_fim.year}'),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _gerar,
+                    child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('GERAR INDICADORES'),
+                  ),
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(onPressed: _gerar, child: const Text('GERAR RELATÓRIO')),
-          const Divider(),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+            child: _dados.isEmpty && !_isLoading
+                ? const Center(child: Text('Nenhum dado encontrado para o período.'))
                 : ListView.builder(
+                    padding: const EdgeInsets.all(16),
                     itemCount: _dados.length,
                     itemBuilder: (context, index) {
                       final item = _dados[index];
-                      return ListTile(
-                        title: Text('Total de Empréstimos no período: ${item['totalEmprestimos']}'),
+                      return Card(
+                        child: ListTile(
+                          leading: const CircleAvatar(child: Icon(Icons.bar_chart)),
+                          title: const Text('Total de Empréstimos'),
+                          trailing: Text(
+                            '${item['totalEmprestimos']}',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                          ),
+                        ),
                       );
                     },
                   ),
